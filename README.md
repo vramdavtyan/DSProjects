@@ -26,4 +26,4 @@ pip install -r requirements.txt
 
 ## Changes after executing app.py
 ---
-![1](https://github.com/user-attachments/assets/b80edac2-952a-4f17-8614-c0cce51660ce)
+![2](https://github.com/user-attachments/assets/d3ed8c3d-ed89-4494-a242-4dd3fc6eb071)
