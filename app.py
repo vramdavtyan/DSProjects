@@ -68,6 +68,8 @@ def manage_DF(filename):
     # df['posting_date'] = pd.to_datetime(df['posting_date']).dt.year
     # drop columns
     df=df.drop(columns=['county','state','lat','long'])
+
+    # df=df[['id','price','year','manufacturer','model',]]
     # filters
     # df = df[df['posting_date'] > 2019]
     df = df[df['year'] > 1999]
@@ -82,7 +84,7 @@ def manage_DF(filename):
     df=df.dropna(subset=['description'])
     df = df.replace({np.nan: None})
 
-    print('---Filtered Data Information---')
+    # print('---Filtered Data Information---')
     # print_data_info(df)
 
     return df
@@ -106,11 +108,11 @@ def description_to_dict(description,keys):
    
 
 def run_all():
-    filename='vehicle.csv'
-    # df_main=manage_DF(filename)
+    filename='vehicles_100.csv'
+    df_main=manage_DF(filename)
 
     df_main=pd.read_csv(filename)
-    df_main=df_main.head(-2)
+    df_main=df_main.head(2)
 
 
     # get columns of DF, remove description and convert to a string

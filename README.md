@@ -23,6 +23,7 @@ ollama list
 ```
 pip install -r requirements.txt
 ```
+## Download Data Set https://www.kaggle.com/datasets/austinreese/craigslist-carstrucks-data
 
 ## Changes after executing app.py
 ---
