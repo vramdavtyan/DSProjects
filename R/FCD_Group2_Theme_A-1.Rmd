@@ -1,0 +1,235 @@
+---
+title: "Study on pollution in the USA, Group A"
+author:
+  - "Alexandre Baptista 64506"
+  - "André Pires 64347"
+  - "Vram Davtyan 64691"
+date: "November 2024"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+# Introdution
+
+In this assignment, we analyze the air pollution dataset using Principal Component Analysis (PCA) and K-means clustering. The dataset includes air quality and environmental factors from 41 US cities. The goal is dimensionality reduction by creating a new set of uncorrelated variables with maximum variance;
+
+# 1. Exploratory Data Analysis
+
+The given dataset is already discretized, contaning non-null or blank spaces. It comprises 41 rows and 8 columns. Also the following libraries help visualize the function made, and make functions, there were choosen because are easy and simple to use.
+
+### 1.1 Load the necessary libraries
+
+```{r}
+library(dplyr)
+library(factoextra)
+library(AMR)
+```
+
+### 1.2 Load Dataset
+
+```{r}
+data <- read.csv("airpollution.csv")
+```
+
+### 1.3 Descriptive analysis
+
+```{r}
+head(data)
+str(data)
+dim(data)
+```
+
+### 1.4 Localization measures
+
+```{r}
+summary(data)
+```
+
+### 1.5 Dispersion measures
+
+```{r}
+data %>% summarise_if(is.numeric, sd)
+```
+
+# 2. Calculation of components
+
+The PCA should be done based on the correlation matrix based on the variables description, Localization Measures, and Dispersion Measures previously done because:
+-   the measures units of the variables are not all the same. Looking at three variables, precip, days and wind, the precip variable is in inches, the variable days is in days, and the variable wind is in miles per hour, which are different measures units.
+-   the range of variables is big, when looking at the Minimum and the Maximum values of the variables pop and wind as example.
+-   the Mean of the variables are different, when looking at the mean values of the variables temp and manuf as example.
+-   the Standard Deviation of the variables have different variances, when looking at the Standard Deviation values of the variables pop and wind as example.
+
+```{r}
+# 1) Determine the correlation matrix
+cor_data <- cor(data[, sapply(data, is.numeric)])
+cor_data
+```
+Each principal component (PC) has an associated eigenvalue that quantifies the amount of variance explained by that component. The higher the eigenvalue, the more variance that component captures.
+
+```{r}
+# 2) Obtain eigenvalues and eigenvectors
+eigen_data <- eigen(cor_data)
+eigen_data
+```
+
+As can be seen we have 2 principal components (PC), because according to Kraiser's criterion: the first eigenvalues \>=1 --\> Retain the principal components.
+
+# 3. Perform PCA
+
+The explained varience is demonstrated as the percentage of the total variance explained by each component:
+
+-   PC1 explain approximately 39% of the variance.
+-   PC2 explain approximately 21% of the varience.
+
+Together the PC1 and PC2 explain approximately 60% of the total varience, what is a moderate value.
+
+```{r}
+numeric_data <- data[, sapply(data, is.numeric)]
+pca_data <- princomp(numeric_data,cor = TRUE)
+print(summary(pca_data), loadings = TRUE)
+```
+
+The importance of variables in each retained principal component is determined by their loading values, which show the correlation between the original variables and the principal components.
+
+-   Loading Values: Indicates how much each variable contributes to the PC. A higher absolute value of a loading indicates that the variable has a stronger influence on that PC.
+-   Sign of Loadings: The sign (positive or negative) shows the direction of the relationship (e.g., positive loading means the variable increases with the component, while negative loading means the variable decreases with the component).
+
+PC1:
+
+-   High positive loadings for SO2, temperature, and population, indicate that these variables increase as PC1 increases.
+-   Negative loadings for precipitation or wind,indicate that these variables decrease as PC1 increases.
+-   PC1 may be capturing overall urbanization or industrialization.
+
+PC2:
+
+-   High loadings for precipitation, wind, and temperature.
+-   PC2 captures more of the environmental factors, like climate, rainfall, and wind conditions, which contrast with industrial factors.
+
+# 4. Scree plot
+
+The scree plot shows the eigenvalues (variance explained) for each PC.
+
+```{r}
+fviz_eig(pca_data)
+```
+
+# 5. Identify the variables that contribute more in relation to the component retained
+
+```{r}
+cor(numeric_data,pca_data$scores)
+ggplot_pca(pca_data)
+```
+
+# 6. Elbow method
+
+The elbow method suggest the optimal number of clusters (k). Looking for the point where the curve flattens and adding a vertical line to be sure, we obtain the optimal K= 8.
+
+```{r}
+# Compute WSS (Within-Cluster Sum of Squares) for different k values
+data_scaled <- scale(numeric_data)
+set.seed(123)
+wss <- sapply(1:10, function(k) {
+  kmeans(data_scaled, centers = k, nstart = 25)$tot.withinss
+})
+# Determine the optimal number of clusters (elbow point)
+optimal_k <- which.min(diff(diff(wss))) + 1  # Add 1 because we applied two differences
+# Plot the Elbow Method
+plot(1:10, wss, type = "b", pch = 19, frame = FALSE,
+     xlab = "Number of Clusters (k)",
+     ylab = "Total Within-Cluster Sum of Squares",
+     main = "Elbow Method for Optimal Clusters")
+# Add a vertical line at the optimal number of clusters
+abline(v = optimal_k, col = "red", lty = 2)
+# Add a label to indicate the optimal k
+text(optimal_k, wss[optimal_k], labels = paste("Optimal k =", optimal_k), pos = 4, col = "red")
+```
+
+# 7. k-means
+
+```{r}
+kmeans <- kmeans(numeric_data, 8)
+kmeans
+fviz_cluster(kmeans, numeric_data)
+```
+
+Observing the plot, each point in the plot represents an individual observation, colored according to its assigned cluster. The shapes of the points represent different clusters, and the shaded areas indicate the convex hulls that enclose the observations for each cluster.
+
+## 7.1 Cluster Sizes:
+
+-   Cluster 1: 6 observation.
+-   Cluster 2: 7 observation.
+-   Cluster 3: 7 observation.
+-   Cluster 4: 2 observation.
+-   Cluster 5: 12 observation.
+-   Cluster 6: 2 observation.
+-   Cluster 7: 4 observation.
+-   Cluster 8: 1 observation.
+
+## 7.2 Cluster Means:
+
+This provides a summary of the average values for each variable within each cluster.
+
+## 7.3 Plot Interpretation:
+
+-   The plot uses the 2 principal components to reduce dimensionality.
+-   We can see that cluster 8 (pink) is a distint outlier in terms of pollution (SO2), with very high values compared to the other clusters.
+
+## 7.4 Cluster characteristics in the plot:
+
+-   Cluster 1 (green) and Cluster 5 (blue) are near the center of the plot, with moderate pollution and moderate temperature, population, and manufacturing levels.
+-   Cluster 4 (yellow) stands out with high pollution (SO2), representing industrialized regions with large populations.
+-   Cluster 8 (pink) is an outlier with very high SO2, manufacturing, and population, showing extreme values compared to the other clusters.
+
+# 8 Clusters description
+
+#### 8.1 Cluster 1 (Red):
+
+-   Is the PC1, which indicates a unique positioning compared to other clusters. It's separated from the other clusters in terms of Dim1 and Dim2 that suggest disting patterns in the original data.
+-   Has high concentration of SO2, manufacturing, and population, with moderated precipitation and wind values. It appears to be an outlier in terms of Dim1.
+
+#### 8.2 Cluster 2 (Brown):
+
+-   It is in the middle of the plot, showing a mix of data points but generally concentrated around Dim1 and Dim2 axes. It has a moderate to high population and moderate levels of SO2, temp, and precipitation.
+-   This cluster represents areas with moderate air pollution and moderate temperatures, but with a diverse range of industrial activity.
+
+#### 8.3 Cluster 3 (Ligh Green):
+
+-   It is located at the positive side of Dim1 and relative lower in Dim2. It tends to have low to moderate values across most features but is grouped tightly, indicating consistent values across this cluster.
+-   It has lower levels of SO2, temperature, and manufacturing, and are marked by higher precipitation and wind.This could be a rural or less industrialized region with a high focus on environmental factors.
+
+#### 8.4 Cluster 4 (Dark Green):
+
+-   It is located in the lower right quadrant of the plot, with high Dim1 and low Dim2 values.The points are scattered but still tightly grouped.
+-   It has higher values for temperature and manufacturing, along with moderate SO2 levels and population density. This could represent urban areas with moderate industrial activity.
+
+#### 8.5 Cluster 5 (Cyan):
+
+-   It is located towards the upper left of the plot, with data ponts scattered around both axes.
+-   It has higher SO2, population, and manufacturing values, suggesting that these could be densely populated urban areas with moderate industrialization and air pollution levels.
+
+#### 8.6 Cluster 6 (Blue):
+
+-   It is scattered in top right corner of the plot. With relatively high SO2, temperature, and precipitation values.
+-   It most likely represents hotter and more polluted areas, possibly liked with industrial activities producing higher SO2 emissions.
+
+#### 8.7 Cluster 7 (Purple):
+
+-   It is spread across the lower-left quadrant of the plot, showing distints patterns in Dim1 and Dim2.
+-   It has areas with lower SO2, temperature, and manufacturing, with moderate precipitation. These might be rural or less industrialized regions.
+
+#### 8.8 Cluster 8 (Pink)
+
+-   It it located towards the far right of the plot in the Dim1 positive area.
+-   It has the highest SO2, temperature, and manufacturing values. It's likely an extremely industrialized area with high levels of pollution.
+
+#### 8.9 Summary of the Clusters:
+
+-   Cluster 1: High SO2, manufacturing, population, but distinct from other clusters.
+-   Cluster 2: Moderate values across most features, indicating a mix of pollution and environmental factors.
+-   Cluster 3: Low pollution and manufacturing, with high environmental factors like precipitation.
+-   Cluster 4: Urban area with moderate manufacturing and SO2 levels.
+-   Cluster 5: Densely populated urban areas with high industrial activity.
+-   Cluster 6: Hotter and polluted areas with high precipitation.
+-   Cluster 7: Rural or less industrialized with low SO2, temperature, and manufacturing.
+-   Cluster 8: Highly industrialized area with high SO2 and temperature levels.

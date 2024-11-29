@@ -3,10 +3,10 @@ import pandas as pd
 
 # this example is without usage of langchain only ollama
 
-context='Write your own context or load a file'
+context='Very manja and gentle stray cat found, we would really like to find a home for it because we cannot keep her for ourselves for long. Has a very cute high pitch but soft meow. Please contact me if you would be interested in adopting.'
 
 question = '''
-write your question
+create a dictionary from the description of this animal ->
 '''
 
 prompt = f'{question} : {context}'
