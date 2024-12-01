@@ -10,6 +10,8 @@ output:
   html_document: default
 ---
 
+# Github Repo - https://github.com/vramdavtyan/DSProjects/tree/main/R
+
 # Introdution
 
 In this assignment, we analyze the air pollution dataset using Principal Component Analysis (PCA) and K-means clustering. The dataset includes air quality and environmental factors from 41 US cities. The goal is dimensionality reduction by creating a new set of uncorrelated variables with maximum variance;
